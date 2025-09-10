@@ -1,6 +1,16 @@
 // src/lib/calendar.js
 import { v4 as uuidv4 } from "uuid";
 
+function toJSDate(d) {
+  if (!d) return null;
+  // If Firestore Timestamp
+  if (d._seconds !== undefined && d._nanoseconds !== undefined) {
+    return new Date(d._seconds * 1000 + d._nanoseconds / 1000000);
+  }
+  return new Date(d);
+}
+
+
 /**
  * Generate an ICS calendar invite for an event
  * @param {object} event - Event details
@@ -24,8 +34,9 @@ export function generateICS(event) {
   const formatICSDate = (d) =>
     new Date(d).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 
-  const start = formatICSDate(eventDate);
-  const end = eventEndDate ? formatICSDate(eventEndDate) : start;
+  const start = formatICSDate(toJSDate(eventDate));
+  const end = formatICSDate(toJSDate(eventEndDate || eventDate));
+
 
   const uid = uuidv4();
 

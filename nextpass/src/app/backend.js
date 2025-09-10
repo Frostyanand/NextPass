@@ -3,6 +3,7 @@ import admin from "firebase-admin";
 import { db } from "@/lib/firebase";
 import { sendMail } from "@/lib/mailer";
 import { generateICS } from "@/lib/calendar";
+import QRCode from "qrcode";
 
 /* ---------------------------
    Utilities
@@ -12,7 +13,13 @@ function parseDateField(value) {
   const d = new Date(value);
   return isNaN(d.getTime()) ? value : d;
 }
-
+async function generateQRCodeBase64(text) {
+  try {
+    return await QRCode.toDataURL(text); // returns base64 PNG
+  } catch (err) {
+    throw new Error("QR code generation failed: " + err.message);
+  }
+}
 /* ---------------------------
    Event Management functions
    --------------------------- */
@@ -140,25 +147,33 @@ export async function sendUpdateEmails(eventId, updatedFields, participants = []
     organiserEmail: eventData.organiserEmail,
   });
 
+
+const eventDateJS = eventData.eventDate?._seconds
+  ? new Date(eventData.eventDate._seconds * 1000)
+  : new Date(eventData.eventDate);
+
+const regDeadlineJS = eventData.regDeadline?._seconds
+  ? new Date(eventData.regDeadline._seconds * 1000)
+  : new Date(eventData.regDeadline);
+
   // Create a formatted HTML email
   const buildEmailBody = (participantName) => `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background: #fafafa;">
-      <h2 style="color: #2c3e50;">📢 Event Update: ${eventData.eventName}</h2>
-      <p>Dear <strong>${participantName}</strong>,</p>
-      <p>The event you registered for has been <strong>updated</strong>. Here are the latest details:</p>
-      
-      <table style="width:100%; border-collapse: collapse; margin: 15px 0;">
-        <tr><td><strong>🗓 Date:</strong></td><td>${new Date(eventData.eventDate).toLocaleString()}</td></tr>
-        <tr><td><strong>⏰ Registration Deadline:</strong></td><td>${new Date(eventData.regDeadline).toLocaleString()}</td></tr>
-        <tr><td><strong>📝 Remarks:</strong></td><td>${eventData.remarks || "—"}</td></tr>
-      </table>
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background: #fafafa;">
+    <h2 style="color: #2c3e50;">📢 Event Update: ${eventData.eventName}</h2>
+    <p>Dear <strong>${participantName}</strong>,</p>
+    <p>The event you registered for has been <strong>updated</strong>. Here are the latest details:</p>
+    
+    <table style="width:100%; border-collapse: collapse; margin: 15px 0;">
+      <tr><td><strong>🗓 Date:</strong></td><td>${eventDateJS.toLocaleString()}</td></tr>
+      <tr><td><strong>⏰ Registration Deadline:</strong></td><td>${regDeadlineJS.toLocaleString()}</td></tr>
+      <tr><td><strong>📝 Remarks:</strong></td><td>${eventData.remarks || "—"}</td></tr>
+    </table>
 
-      <p style="margin-top: 20px;">You will also find a <strong>.ics calendar invite</strong> attached to this email. You can add the event directly to your Google/Outlook calendar.</p>
-      
-      <p style="margin-top: 20px;">Regards,<br/>Event Organiser Team</p>
-    </div>
-  `;
-
+    <p style="margin-top: 20px;">You will also find a <strong>.ics calendar invite</strong> attached to this email. You can add the event directly to your Google/Outlook calendar.</p>
+    
+    <p style="margin-top: 20px;">Regards,<br/>Event Organiser Team</p>
+  </div>
+`;
   // Send mail to all participants
   const results = [];
   for (const p of participants) {
@@ -181,3 +196,119 @@ export async function sendUpdateEmails(eventId, updatedFields, participants = []
     results,
   };
 }
+
+/* ---------------------------
+   Registration Functions
+--------------------------- */
+
+/**
+ * registerParticipant
+ * Registers a participant, generates QR code + ICS invite, sends registration email
+ */export async function registerParticipant(eventId, participantData) {
+  if (!eventId || !participantData?.name || !participantData?.email) {
+    throw new Error("eventId, name, and email are required");
+  }
+
+  const docRef = db.collection("events").doc(eventId);
+  const snap = await docRef.get();
+  if (!snap.exists) throw new Error(`Event ${eventId} not found`);
+
+  const eventData = snap.data();
+  const now = new Date();
+
+  // Convert Firestore timestamps to JS Date
+  const eventDateJS = eventData.eventDate?.toDate ? eventData.eventDate.toDate() : new Date(eventData.eventDate);
+  const regDeadlineJS = eventData.regDeadline?.toDate ? eventData.regDeadline.toDate() : new Date(eventData.regDeadline);
+
+  // Check registration deadline
+  if (regDeadlineJS && regDeadlineJS < now) {
+    throw new Error("Registration deadline has passed");
+  }
+
+  const participants = eventData.participants || [];
+
+  // Check for duplicate email
+  if (participants.some(p => p.email.toLowerCase() === participantData.email.toLowerCase())) {
+    throw new Error("Participant with this email already registered");
+  }
+
+  // Create participant object
+  const participantId = uuidv4();
+  const qrCodeBase64 = await generateQRCodeBase64(participantId);
+
+  const participantObj = {
+    id: participantId,
+    name: participantData.name,
+    email: participantData.email,
+    regId: participantId,
+    qrCodeUrl: qrCodeBase64, // store base64 for simplicity
+    attendance: false,
+    checkInTime: null
+  };
+
+  // Update event doc participants array
+  await docRef.update({
+    participants: admin.firestore.FieldValue.arrayUnion(participantObj)
+  });
+
+  // Generate ICS file
+  const icsFile = generateICS({
+    eventName: eventData.eventName,
+    eventDate: eventDateJS,
+    remarks: eventData.remarks,
+    organiserEmail: eventData.organiserEmail
+  });
+
+  // Build registration email HTML
+  const emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background: #fafafa;">
+      <h2 style="color: #2c3e50;">✅ Registration Successful: ${eventData.eventName}</h2>
+      <p>Dear <strong>${participantData.name}</strong>,</p>
+      <p>Thank you for registering for the event. Here are your registration details:</p>
+
+      <table style="width:100%; border-collapse: collapse; margin: 15px 0;">
+        <tr><td><strong>Event:</strong></td><td>${eventData.eventName}</td></tr>
+        <tr><td><strong>Date:</strong></td><td>${eventDateJS.toLocaleString()}</td></tr>
+        <tr><td><strong>Remarks:</strong></td><td>${eventData.remarks || "—"}</td></tr>
+      </table>
+
+      <p>Your <strong>QR code</strong> for event check-in is attached below. Please keep it safe and present it at the event for attendance:</p>
+      <img src="cid:qrcode@event" alt="QR Code" style="width:150px; height:150px;" />
+
+
+      <p>You will also find a <strong>.ics calendar invite</strong> attached. Add it to your Google/Outlook calendar.</p>
+
+      <p>Regards,<br/>Event Organiser Team</p>
+    </div>
+  `;
+
+  // Send email with QR code (inline) and ICS attachment
+  const attachments = [
+  {
+    filename: "qrcode.png",
+    content: Buffer.from(qrCodeBase64.split(",")[1], "base64"),
+    cid: "qrcode@event",
+  },
+  icsFile, // keep ICS as is
+];
+
+await sendMail(participantData.email, `Registration: ${eventData.eventName}`, emailHtml, attachments);
+
+  return participantObj;
+}
+
+
+/**
+ * getParticipants
+ * Fetch all participants for an event
+ */
+export async function getParticipants(eventId) {
+  if (!eventId) throw new Error("eventId is required");
+  const docRef = db.collection("events").doc(eventId);
+  const snap = await docRef.get();
+  if (!snap.exists) throw new Error(`Event ${eventId} not found`);
+
+  const participants = snap.data().participants || [];
+  return participants;
+}
+
