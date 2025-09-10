@@ -312,3 +312,50 @@ export async function getParticipants(eventId) {
   return participants;
 }
 
+
+/**
+ * Marks attendance for a participant
+ * @param {string} eventId
+ * @param {string} participantId
+ * @returns {object} status message
+ */
+export async function markAttendance(eventId, participantId) {
+  if (!eventId || !participantId) throw new Error("eventId and participantId are required");
+
+  const docRef = db.collection("events").doc(eventId);
+  const snap = await docRef.get();
+  if (!snap.exists) throw new Error(`Event ${eventId} not found`);
+
+  const participants = snap.data().participants || [];
+  const index = participants.findIndex(p => p.id === participantId);
+  if (index === -1) throw new Error("Participant not found");
+
+  const participant = participants[index];
+
+  if (participant.attendance) {
+    // Convert Firestore Timestamp to JS Date
+    const checkInTime = participant.checkInTime?.toDate
+      ? participant.checkInTime.toDate()
+      : participant.checkInTime
+      ? new Date(participant.checkInTime)
+      : null;
+
+    return {
+      success: false,
+      message: `Already checked in at ${checkInTime?.toLocaleString() || "Unknown time"}`
+    };
+  }
+
+  const now = new Date();
+  participants[index].attendance = true;
+  participants[index].checkInTime = now;
+
+  await docRef.update({ participants });
+
+  return {
+    success: true,
+    message: `Check-in successful at ${now.toLocaleString()}`,
+    participant: participants[index]
+  };
+}
+
