@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 import admin from "firebase-admin";
 import { db } from "@/lib/firebase";
+import { sendMail } from "@/lib/mailer";
+import { generateICS } from "@/lib/calendar";
 
 /* ---------------------------
    Utilities
@@ -113,20 +115,69 @@ export async function updateEvent(eventId, updatedFields = {}) {
   }
 }
 
-/* ---------------------------
-   Placeholder mailer
-   --------------------------- */
+/**
+ * Send event update emails to all participants
+ * @param {string} eventId
+ * @param {object} updatedFields
+ * @param {Array} participants
+ */
 export async function sendUpdateEmails(eventId, updatedFields, participants = []) {
-  console.log(`[placeholder] sendUpdateEmails called for ${eventId}`);
+  if (!participants.length) {
+    return { note: "No participants to notify", eventId };
+  }
+
+  // Fetch the latest event snapshot to get full details
+  const eventSnap = await db.collection("events").doc(eventId).get();
+  if (!eventSnap.exists) throw new Error(`Event ${eventId} not found`);
+  const eventData = eventSnap.data();
+
+  // Generate ICS file
+  const icsFile = generateICS({
+    eventName: eventData.eventName,
+    eventDate: eventData.eventDate,
+    eventEndDate: eventData.eventEndDate || eventData.eventDate, // fallback
+    remarks: eventData.remarks,
+    organiserEmail: eventData.organiserEmail,
+  });
+
+  // Create a formatted HTML email
+  const buildEmailBody = (participantName) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background: #fafafa;">
+      <h2 style="color: #2c3e50;">📢 Event Update: ${eventData.eventName}</h2>
+      <p>Dear <strong>${participantName}</strong>,</p>
+      <p>The event you registered for has been <strong>updated</strong>. Here are the latest details:</p>
+      
+      <table style="width:100%; border-collapse: collapse; margin: 15px 0;">
+        <tr><td><strong>🗓 Date:</strong></td><td>${new Date(eventData.eventDate).toLocaleString()}</td></tr>
+        <tr><td><strong>⏰ Registration Deadline:</strong></td><td>${new Date(eventData.regDeadline).toLocaleString()}</td></tr>
+        <tr><td><strong>📝 Remarks:</strong></td><td>${eventData.remarks || "—"}</td></tr>
+      </table>
+
+      <p style="margin-top: 20px;">You will also find a <strong>.ics calendar invite</strong> attached to this email. You can add the event directly to your Google/Outlook calendar.</p>
+      
+      <p style="margin-top: 20px;">Regards,<br/>Event Organiser Team</p>
+    </div>
+  `;
+
+  // Send mail to all participants
+  const results = [];
+  for (const p of participants) {
+    try {
+      const res = await sendMail(
+        p.email,
+        `Update: ${eventData.eventName}`,
+        buildEmailBody(p.name || "Participant"),
+        [icsFile]
+      );
+      results.push({ email: p.email, status: "sent", info: res });
+    } catch (err) {
+      results.push({ email: p.email, status: "failed", error: err.message });
+    }
+  }
+
   return {
-    note: "placeholder - implement sendMail + generateICS",
     eventId,
-    updatedFields,
     recipientsCount: participants.length,
-    sampleRecipients: participants.slice(0, 10).map(p => ({
-      name: p.name,
-      email: p.email,
-      id: p.id
-    }))
+    results,
   };
 }
