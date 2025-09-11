@@ -4,7 +4,7 @@ This document details all available API endpoints for the NextPass backend, incl
 
 Base URL examples:
 - Local development: `http://localhost:3000`
-- Production: `<your-domain>`
+- Production: `
 
 All endpoints return JSON unless otherwise specified.
 
