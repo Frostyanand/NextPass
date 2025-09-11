@@ -205,7 +205,7 @@ const regDeadlineJS = eventData.regDeadline?._seconds
 /**
  * registerParticipant
  * Registers a participant, generates QR code + ICS invite, sends registration email
- */export async function registerParticipant(eventId, participantData) {
+ */export async function registerParticipant(eventId, participantData) { 
   if (!eventId || !participantData?.name || !participantData?.email) {
     throw new Error("eventId, name, and email are required");
   }
@@ -252,6 +252,25 @@ const regDeadlineJS = eventData.regDeadline?._seconds
     participants: admin.firestore.FieldValue.arrayUnion(participantObj)
   });
 
+  // ---------------- NEW CODE START ----------------
+  // Update user's registration history
+  const userRef = db.collection("users").doc(participantData.email);
+  await userRef.set(
+    {
+      email: participantData.email,
+      name: participantData.name,
+      registrations: admin.firestore.FieldValue.arrayUnion({
+        eventId,
+        eventName: eventData.eventName,
+        regDate: admin.firestore.Timestamp.now(),
+        remarks: eventData.remarks || "—",
+        eventDate: eventData.eventDate || null
+      })
+    },
+    { merge: true } // merge so we don’t overwrite old data
+  );
+  // ---------------- NEW CODE END ------------------
+
   // Generate ICS file
   const icsFile = generateICS({
     eventName: eventData.eventName,
@@ -276,7 +295,6 @@ const regDeadlineJS = eventData.regDeadline?._seconds
       <p>Your <strong>QR code</strong> for event check-in is attached below. Please keep it safe and present it at the event for attendance:</p>
       <img src="cid:qrcode@event" alt="QR Code" style="width:150px; height:150px;" />
 
-
       <p>You will also find a <strong>.ics calendar invite</strong> attached. Add it to your Google/Outlook calendar.</p>
 
       <p>Regards,<br/>Event Organiser Team</p>
@@ -285,15 +303,20 @@ const regDeadlineJS = eventData.regDeadline?._seconds
 
   // Send email with QR code (inline) and ICS attachment
   const attachments = [
-  {
-    filename: "qrcode.png",
-    content: Buffer.from(qrCodeBase64.split(",")[1], "base64"),
-    cid: "qrcode@event",
-  },
-  icsFile, // keep ICS as is
-];
+    {
+      filename: "qrcode.png",
+      content: Buffer.from(qrCodeBase64.split(",")[1], "base64"),
+      cid: "qrcode@event",
+    },
+    icsFile, // keep ICS as is
+  ];
 
-await sendMail(participantData.email, `Registration: ${eventData.eventName}`, emailHtml, attachments);
+  await sendMail(
+    participantData.email,
+    `Registration: ${eventData.eventName}`,
+    emailHtml,
+    attachments
+  );
 
   return participantObj;
 }
@@ -422,4 +445,56 @@ export async function exportAttendance(eventId) {
     fileBuffer: buffer,
     fileName: `${eventId}_attendance.xlsx`,
   };
+}
+
+
+// Get all available events (for participants to browse)
+export async function getAvailableEvents() {
+  try {
+    const snapshot = await db.collection("events").get();
+    const now = new Date();
+    const availableEvents = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const { eventName, organiserEmail, eventDate, regDeadline, remarks } = data;
+
+      // Convert Firestore Timestamp → JS Date
+      const eventDateObj = eventDate?.toDate ? eventDate.toDate() : new Date(eventDate);
+      const deadlineObj = regDeadline?.toDate ? regDeadline.toDate() : new Date(regDeadline);
+
+      // Only include events where deadline & event date are still in future
+      if (deadlineObj >= now && eventDateObj >= now) {
+        availableEvents.push({
+          id: doc.id, // eventId
+          eventName,
+          organiserEmail,
+          eventDate: eventDateObj,
+          regDeadline: deadlineObj,
+          remarks,
+        });
+      }
+    });
+
+    return availableEvents;
+  } catch (err) {
+    console.error("Error fetching available events:", err);
+    throw err;
+  }
+}
+
+
+// Fetch all registrations for a given user (participant)
+export async function getRegistrationsByUser(userEmail) {
+  if (!userEmail) throw new Error("userEmail is required");
+
+  const userRef = db.collection("users").doc(userEmail);
+  const snap = await userRef.get();
+
+  if (!snap.exists) {
+    return []; // no user found, return empty array
+  }
+
+  const userData = snap.data();
+  return userData.registrations || [];
 }
