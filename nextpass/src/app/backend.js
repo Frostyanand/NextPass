@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
 import { db, FieldValue, Timestamp } from "@/lib/firebase"; 
-import { db } from "@/lib/firebase";
 import { sendMail } from "@/lib/mailer";
 import { generateICS } from "@/lib/calendar";
 import QRCode from "qrcode";
