@@ -13,6 +13,8 @@
  * - Replace the placeholder videos in VIDEO_PLAYLIST with your own files.
  */
 
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { 
@@ -102,10 +104,25 @@ function NavBar({ userEmail, setActiveTab }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleNavClick = (item) => {
-    setActiveNavItem(item);
-    if (setActiveTab) setActiveTab(item.toLowerCase().replace(' ', ''));
+ const handleNavClick = (item) => {
+  setActiveNavItem(item);
+
+  // This map ensures we always get the correct tab name, with no typos.
+  const tabMap = {
+    'Home': 'home',
+    'Explore': 'explore',
+    'Organise': 'organise',
+    'My Passes': 'mypass',
+    // 'About': 'about' // You can uncomment this when you build the About page
   };
+
+  const tabName = tabMap[item];
+
+  // Only call setActiveTab if the item exists in our map.
+  if (setActiveTab && tabName) {
+    setActiveTab(tabName);
+  }
+};
 
   return (
     <motion.nav

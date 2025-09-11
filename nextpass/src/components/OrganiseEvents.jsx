@@ -137,10 +137,15 @@ function Toast({ message, type, isVisible, onClose }) {
 // Event Card Component
 function EventCard({ event, onClick }) {
   // Old code in OrganiseEvents.js -> EventCard
-const formatDate = (dateString) => {
-  const date = new Date(dateString);
+// FIXED: This function now correctly handles Firestore's date objects
+const formatDate = (dateValue) => {
+  let date;
+  if (dateValue && typeof dateValue === 'object' && dateValue._seconds) {
+    date = new Date(dateValue._seconds * 1000);
+  } else {
+    date = new Date(dateValue);
+  }
 
-  // Check if the date is valid. If not, return placeholder dashes.
   if (isNaN(date.getTime())) {
     return { day: '--', month: '---', time: '--:--', full: 'Invalid Date' };
   }
@@ -539,6 +544,7 @@ function QRScanner({ isOpen, onClose, onScan, eventId }) {
 }
 // Event Detail Modal
 function EventDetailModal({ event, isOpen, onClose, onUpdate, onRefresh }) {
+    console.log("Raw event data received in modal:", event);
   const [activeTab, setActiveTab] = useState('details');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
@@ -546,18 +552,18 @@ function EventDetailModal({ event, isOpen, onClose, onUpdate, onRefresh }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [checkInResult, setCheckInResult] = useState(null);
-  const formatDateForInput = (dateValue) => {
+// FIXED: This function correctly formats dates for the edit form
+const formatDateForInput = (dateValue) => {
   if (!dateValue) return '';
-  
-  // The date from Firestore might be a string or a timestamp object
-  // new Date() can handle both, but we must check if it's valid
-  const date = new Date(dateValue.seconds ? dateValue.toDate() : dateValue);
-
-  if (isNaN(date.getTime())) {
-    return ''; // Return empty string for invalid dates
+  let date;
+  if (dateValue && typeof dateValue === 'object' && dateValue._seconds) {
+    date = new Date(dateValue._seconds * 1000);
+  } else {
+    date = new Date(dateValue);
   }
 
-  // Manually build the string in the "YYYY-MM-DDTHH:mm" format
+  if (isNaN(date.getTime())) return '';
+
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -566,7 +572,32 @@ function EventDetailModal({ event, isOpen, onClose, onUpdate, onRefresh }) {
 
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
+  // ADD THIS NEW HELPER FUNCTION
+const formatCheckInTime = (dateValue) => {
+  if (!dateValue) return '-'; // Return a dash if no time is set
 
+  let date;
+  // Handle the Firestore timestamp object from the server
+  if (dateValue && typeof dateValue === 'object' && dateValue._seconds) {
+    date = new Date(dateValue._seconds * 1000);
+  } else {
+    // Fallback for regular date strings
+    date = new Date(dateValue);
+  }
+
+  if (isNaN(date.getTime())) {
+    return 'Invalid';
+  }
+
+  // Format it specifically for the table
+  return date.toLocaleString('en-IN', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Kolkata'
+  });
+};
   useEffect(() => {
   if (event && isOpen) {
     setEditData({
@@ -660,20 +691,21 @@ function EventDetailModal({ event, isOpen, onClose, onUpdate, onRefresh }) {
 
   if (!event) return null;
 
-  const formatDate = (dateString) => {
-  // Handles cases where the date might be null or undefined
-  if (!dateString) return 'Not set'; 
-  
-  // Correctly handles both ISO strings and Firestore timestamp objects
-  const date = new Date(dateString.seconds ? dateString.toDate() : dateString);
-
-  // Checks if the date is valid after trying to create it
-  if (isNaN(date.getTime())) {
-    return 'Invalid Date'; 
+  // FIXED: This function correctly displays dates in the modal's detail view
+const formatDate = (dateValue) => {
+  if (!dateValue) return 'Not set';
+  let date;
+  if (dateValue && typeof dateValue === 'object' && dateValue._seconds) {
+    date = new Date(dateValue._seconds * 1000);
+  } else {
+    date = new Date(dateValue);
   }
 
-  // Formats the valid date correctly for your timezone (India Standard Time)
-  return date.toLocaleString('en-IN', { 
+  if (isNaN(date.getTime())) {
+    return 'Invalid Date';
+  }
+
+  return date.toLocaleString('en-IN', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -683,7 +715,6 @@ function EventDetailModal({ event, isOpen, onClose, onUpdate, onRefresh }) {
     timeZone: 'Asia/Kolkata'
   });
 };
-
   return (
     <>
       <AnimatePresence>
@@ -994,15 +1025,7 @@ function EventDetailModal({ event, isOpen, onClose, onUpdate, onRefresh }) {
                                       )}
                                     </td>
                                     <td className="py-3 px-4 text-white/70 text-sm">
-                                      {participant.checkInTime 
-                                        ? new Date(participant.checkInTime).toLocaleString('en', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                          })
-                                        : '-'
-                                      }
+                                      {formatCheckInTime(participant.checkInTime)}
                                     </td>
                                   </motion.tr>
                                 ))}
