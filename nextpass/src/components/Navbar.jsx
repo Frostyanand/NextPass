@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { HiSparkles, HiBell, HiArrowRightOnRectangle } from "react-icons/hi2";
+import { HiSparkles, HiArrowRightOnRectangle } from "react-icons/hi2";
+import { MdOutlineRocketLaunch } from "react-icons/md"; // 🚀 fun rocket icon
 import { useAuth } from "../context/AuthContext";
 
 export default function NavBar({ setActiveTab }) {
-  // FIX: We no longer need the userEmail prop.
-  // We get the REAL user and the signOut function from our AuthContext.
   const { currentUser, signOutUser } = useAuth();
-  
+
   const [activeNavItem, setActiveNavItem] = useState("Home");
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -25,11 +24,11 @@ export default function NavBar({ setActiveTab }) {
     setActiveNavItem(item);
 
     const tabMap = {
-      'Home': 'home',
-      'Explore': 'explore',
-      'Organise': 'organise',
-      'My Passes': 'mypass',
-      'About': 'about'
+      Home: "home",
+      Explore: "explore",
+      Organise: "organise",
+      "My Passes": "mypass",
+      About: "about",
     };
 
     const tabName = tabMap[item];
@@ -102,27 +101,27 @@ export default function NavBar({ setActiveTab }) {
           {/* User email */}
           <div className="hidden sm:flex items-center space-x-3 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            {/* FIX: Display the real user's email from the context */}
             <span className="text-sm text-white/90 max-w-32 truncate">
               {currentUser?.email}
             </span>
           </div>
 
-          {/* Notification bell - kept from your original code */}
+          {/* Fun rocket icon */}
           <motion.button
-            whileHover={{ scale: 1.1, rotate: 15 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.2, rotate: [0, 15, -10, 0] }}
+            whileTap={{ scale: 0.9, rotate: 0 }}
             className="relative p-3 bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 backdrop-blur-sm border border-white/20 rounded-full hover:from-indigo-500/30 hover:to-cyan-500/30 transition-all duration-200"
+            title="Blast off!"
           >
-            <HiBell className="h-5 w-5 text-white" />
+            <MdOutlineRocketLaunch className="h-5 w-5 text-white" />
             <motion.div
               className="absolute -top-1 -right-1 w-3 h-3 bg-pink-500 rounded-full"
-              animate={{ scale: [1, 1.2, 1] }}
+              animate={{ scale: [1, 1.3, 1], rotate: [0, 20, -20, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
           </motion.button>
 
-          {/* FIX: A properly styled, icon-based Sign Out button */}
+          {/* Sign Out */}
           <motion.button
             onClick={signOutUser}
             whileHover={{ scale: 1.1 }}
