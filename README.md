@@ -1,5 +1,4 @@
 # NextPass
-## NextPass
 
 A modern, full‑stack event management platform for creating events, registering participants, issuing QR‑coded passes, live check‑ins, and exporting attendance.
 
