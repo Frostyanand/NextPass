@@ -4,6 +4,7 @@ import { db } from "@/lib/firebase";
 import { sendMail } from "@/lib/mailer";
 import { generateICS } from "@/lib/calendar";
 import QRCode from "qrcode";
+import ExcelJS from "exceljs";
 
 /* ---------------------------
    Utilities
@@ -359,3 +360,66 @@ export async function markAttendance(eventId, participantId) {
   };
 }
 
+export async function exportAttendance(eventId) {
+  const eventRef = db.collection("events").doc(eventId);
+  const eventSnap = await eventRef.get();
+
+  if (!eventSnap.exists) {
+    return { success: false, message: "Event not found" };
+  }
+
+  const eventData = eventSnap.data();
+  const participants = eventData.participants || [];
+
+  // Create workbook
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Attendance");
+
+  // Header branding
+  sheet.mergeCells("A1:E1");
+  sheet.getCell("A1").value = "NextPass Event Management System";
+  sheet.getCell("A1").font = { bold: true, size: 14 };
+  sheet.getCell("A1").alignment = { horizontal: "center" };
+
+  sheet.mergeCells("A2:E2");
+  sheet.getCell("A2").value = "Built with ❤️ by Anurag Anand";
+  sheet.getCell("A2").alignment = { horizontal: "center" };
+
+  sheet.addRow([]);
+  sheet.addRow([`Event Name: ${eventData.eventName}`]);
+  sheet.addRow([`Event Date: ${eventData.eventDate?.toDate()}`]);
+  sheet.addRow([`Organiser: ${eventData.organiserEmail}`]);
+  sheet.addRow([]);
+
+  // Table header
+  sheet.addRow(["Name", "Email", "ID", "Attendance", "Check-in Time"]);
+  const headerRow = sheet.getRow(sheet.lastRow.number);
+  headerRow.font = { bold: true };
+  headerRow.alignment = { horizontal: "center" };
+
+  // Fill rows
+  participants.forEach((p) => {
+    sheet.addRow([
+      p.name,
+      p.email,
+      p.id,
+      p.attendance ? "Present" : "Absent",
+      p.checkInTime
+        ? new Date(p.checkInTime._seconds * 1000).toLocaleString()
+        : "—",
+    ]);
+  });
+
+  sheet.columns.forEach((col) => {
+    col.width = 25;
+  });
+
+  // Return file buffer
+  const buffer = await workbook.xlsx.writeBuffer();
+
+  return {
+    success: true,
+    fileBuffer: buffer,
+    fileName: `${eventId}_attendance.xlsx`,
+  };
+}
