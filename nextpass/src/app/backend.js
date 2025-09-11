@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import admin from "firebase-admin";
+import { db, FieldValue, Timestamp } from "@/lib/firebase"; 
 import { db } from "@/lib/firebase";
 import { sendMail } from "@/lib/mailer";
 import { generateICS } from "@/lib/calendar";
@@ -42,8 +42,8 @@ export async function createEvent(organiserEmail, eventData = {}) {
     eventDate: parseDateField(eventDate),
     regDeadline: parseDateField(regDeadline),
     remarks,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     participants: []
   };
 
@@ -103,7 +103,7 @@ export async function updateEvent(eventId, updatedFields = {}) {
     throw new Error("No valid updatable fields provided");
   }
 
-  payload.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+  payload.updatedAt = FieldValue.serverTimestamp();
 
   const docRef = db.collection("events").doc(eventId);
   const snapshot = await docRef.get();
@@ -249,7 +249,7 @@ const regDeadlineJS = eventData.regDeadline?._seconds
 
   // Update event doc participants array
   await docRef.update({
-    participants: admin.firestore.FieldValue.arrayUnion(participantObj)
+    participants: FieldValue.arrayUnion(participantObj)
   });
 
   // ---------------- NEW CODE START ----------------
@@ -259,10 +259,10 @@ const regDeadlineJS = eventData.regDeadline?._seconds
     {
       email: participantData.email,
       name: participantData.name,
-      registrations: admin.firestore.FieldValue.arrayUnion({
+      registrations: FieldValue.arrayUnion({
         eventId,
         eventName: eventData.eventName,
-        regDate: admin.firestore.Timestamp.now(),
+        regDate: Timestamp.now(),
         remarks: eventData.remarks || "—",
         eventDate: eventData.eventDate || null
       })
