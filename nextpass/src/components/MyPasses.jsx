@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Logo from './Logo';
+// import Logo from './Logo';
 
 import { 
   HiSparkles, 
@@ -424,9 +424,10 @@ export default function MyPasses({ setActiveTab, userEmail }) {
       </div>
 
       {/* Logo */}
-      <div className="fixed top-6 left-6 z-50">
-        <Logo onClick={() => setActiveTab('home')} />
-      </div>
+      {/* <div className="fixed top-6 left-6 z-50">
+        <div className="relative z-10 container mx-auto px-6 pb-20">
+
+      </div> */}
 
       {/* Main Content */}
       <div className="relative z-10 pt-24 px-6">
@@ -436,7 +437,7 @@ export default function MyPasses({ setActiveTab, userEmail }) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center mb-16"
+            className="text-center mt-12 mb-16"
           >
             <motion.h1 
               className="text-4xl md:text-6xl font-black mb-6"

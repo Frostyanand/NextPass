@@ -3,7 +3,7 @@
  * A stunning events browsing page with glassmorphism design and smooth animations
  * Dependencies: react, framer-motion, react-icons
  */
-import Logo from './Logo';
+// import Logo from './Logo';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -477,10 +477,11 @@ export default function ExploreEvents({ setActiveTab }) {
 
   return (
     <div className="min-h-screen bg-slate-900 relative overflow-hidden">
-        {/* Floating Logo - click to go home */}
+        {/* Floating Logo - click to go home
         <div className="fixed top-6 left-6 z-50">
-        <Logo onClick={() => setActiveTab('home')} />
-        </div>
+        <div className="relative z-10 container mx-auto px-6 pb-20">
+
+        </div> */}
 
       {/* Aurora Background */}
       <AuroraBlob delay={0} color="indigo" size="xlarge" />
@@ -489,13 +490,13 @@ export default function ExploreEvents({ setActiveTab }) {
       <AuroraBlob delay={9} color="violet" size="large" />
 
       {/* Main Content */}
-      <div className="relative z-10 container mx-auto px-6 py-20">
+      <div className="relative z-10 container mx-auto px-6 p-20">
         {/* Header */}
         <motion.div
           variants={headerVariants}
           initial="hidden"
           animate="visible"
-          className="text-center mb-16"
+          className="text-center mt-12 mb-16"
         >
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 bg-gradient-to-r from-white via-indigo-200 to-cyan-200 bg-clip-text text-transparent leading-tight">
             Discover Amazing

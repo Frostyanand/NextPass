@@ -14,7 +14,7 @@
  */
 
 "use client";
-
+import NavBar from "./Navbar";
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { 
@@ -91,124 +91,124 @@ function AuroraBlob({ delay = 0, color = "indigo", size = "large" }) {
   );
 }
 
-// NavBar Component
-function NavBar({ userEmail, setActiveTab }) {
-  const [activeNavItem, setActiveNavItem] = useState('Home');
-  const [isScrolled, setIsScrolled] = useState(false);
+// // NavBar Component
+// function NavBar({ userEmail, setActiveTab }) {
+//   const [activeNavItem, setActiveNavItem] = useState('Home');
+//   const [isScrolled, setIsScrolled] = useState(false);
 
-  const navItems = ['Explore', 'Organise', 'My Passes', 'About'];
+//   const navItems = ['Explore', 'Organise', 'My Passes', 'About'];
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+//   useEffect(() => {
+//     const handleScroll = () => setIsScrolled(window.scrollY > 20);
+//     window.addEventListener('scroll', handleScroll);
+//     return () => window.removeEventListener('scroll', handleScroll);
+//   }, []);
 
- const handleNavClick = (item) => {
-  setActiveNavItem(item);
+//  const handleNavClick = (item) => {
+//   setActiveNavItem(item);
 
-  // This map ensures we always get the correct tab name, with no typos.
-  const tabMap = {
-    'Home': 'home',
-    'Explore': 'explore',
-    'Organise': 'organise',
-    'My Passes': 'mypass',
-    // 'About': 'about' // You can uncomment this when you build the About page
-  };
+//   // This map ensures we always get the correct tab name, with no typos.
+//   const tabMap = {
+//     'Home': 'home',
+//     'Explore': 'explore',
+//     'Organise': 'organise',
+//     'My Passes': 'mypass',
+//     // 'About': 'about' // You can uncomment this when you build the About page
+//   };
 
-  const tabName = tabMap[item];
+//   const tabName = tabMap[item];
 
-  // Only call setActiveTab if the item exists in our map.
-  if (setActiveTab && tabName) {
-    setActiveTab(tabName);
-  }
-};
+//   // Only call setActiveTab if the item exists in our map.
+//   if (setActiveTab && tabName) {
+//     setActiveTab(tabName);
+//   }
+// };
 
-  return (
-    <motion.nav
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-500 ${
-        isScrolled 
-          ? 'backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl shadow-indigo-500/10' 
-          : 'backdrop-blur-md bg-white/5 border border-white/10 shadow-xl'
-      } rounded-2xl px-8 py-4`}
-    >
-      <div className="flex items-center justify-between min-w-[90vw] max-w-7xl">
-        <motion.div 
-          className="flex items-center space-x-2 cursor-pointer"
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          onClick={() => handleNavClick('Home')}
-        >
-          <div className="relative">
-            <HiSparkles className="h-8 w-8 text-indigo-400" />
-            <motion.div
-              className="absolute inset-0 rounded-full bg-indigo-400/20"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
-          <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-cyan-400 to-pink-400 bg-clip-text text-transparent">
-            NextPass
-          </span>
-        </motion.div>
+//   return (
+//     <motion.nav
+//       initial={{ y: -100, opacity: 0 }}
+//       animate={{ y: 0, opacity: 1 }}
+//       transition={{ duration: 0.8, ease: "easeOut" }}
+//       className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-500 ${
+//         isScrolled 
+//           ? 'backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl shadow-indigo-500/10' 
+//           : 'backdrop-blur-md bg-white/5 border border-white/10 shadow-xl'
+//       } rounded-2xl px-8 py-4`}
+//     >
+//       <div className="flex items-center justify-between min-w-[90vw] max-w-7xl">
+//         <motion.div 
+//           className="flex items-center space-x-2 cursor-pointer"
+//           whileHover={{ scale: 1.05 }}
+//           transition={{ type: "spring", stiffness: 400, damping: 10 }}
+//           onClick={() => handleNavClick('Home')}
+//         >
+//           <div className="relative">
+//             <HiSparkles className="h-8 w-8 text-indigo-400" />
+//             <motion.div
+//               className="absolute inset-0 rounded-full bg-indigo-400/20"
+//               animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+//               transition={{ duration: 2, repeat: Infinity }}
+//             />
+//           </div>
+//           <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-cyan-400 to-pink-400 bg-clip-text text-transparent">
+//             NextPass
+//           </span>
+//         </motion.div>
 
-        <div className="hidden md:flex items-center space-x-8 relative">
-          {navItems.map((item) => (
-            <motion.button
-              key={item}
-              onClick={() => handleNavClick(item)}
-              className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200 ${
-                activeNavItem === item 
-                  ? 'text-white' 
-                  : 'text-white/70 hover:text-white'
-              }`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {item}
-              {activeNavItem === item && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-gradient-to-r from-indigo-500/30 to-cyan-500/30 rounded-lg border border-white/20"
-                  initial={false}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                />
-              )}
-            </motion.button>
-          ))}
-        </div>
+//         <div className="hidden md:flex items-center space-x-8 relative">
+//           {navItems.map((item) => (
+//             <motion.button
+//               key={item}
+//               onClick={() => handleNavClick(item)}
+//               className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+//                 activeNavItem === item 
+//                   ? 'text-white' 
+//                   : 'text-white/70 hover:text-white'
+//               }`}
+//               whileHover={{ scale: 1.05 }}
+//               whileTap={{ scale: 0.95 }}
+//             >
+//               {item}
+//               {activeNavItem === item && (
+//                 <motion.div
+//                   layoutId="activeTab"
+//                   className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-cyan-500/10 rounded-lg border border-white/20"
+//                   initial={false}
+//                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
+//                 />
+//               )}
+//             </motion.button>
+//           ))}
+//         </div>
 
-        <div className="flex items-center space-x-4">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="hidden sm:flex items-center space-x-3 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full"
-          >
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-sm text-white/90 max-w-32 truncate">
-              {userEmail || 'user@example.com'}
-            </span>
-          </motion.div>
+//         <div className="flex items-center space-x-4">
+//           <motion.div
+//             whileHover={{ scale: 1.05 }}
+//             className="hidden sm:flex items-center space-x-3 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full"
+//           >
+//             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+//             <span className="text-sm text-white/90 max-w-32 truncate">
+//               {userEmail || 'user@example.com'}
+//             </span>
+//           </motion.div>
           
-          <motion.button
-            whileHover={{ scale: 1.1, rotate: 15 }}
-            whileTap={{ scale: 0.9 }}
-            className="relative p-3 bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 backdrop-blur-sm border border-white/20 rounded-full hover:from-indigo-500/30 hover:to-cyan-500/30 transition-all duration-200"
-          >
-            <HiBell className="h-5 w-5 text-white" />
-            <motion.div
-              className="absolute -top-1 -right-1 w-3 h-3 bg-pink-500 rounded-full"
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </motion.button>
-        </div>
-      </div>
-    </motion.nav>
-  );
-}
+//           <motion.button
+//             whileHover={{ scale: 1.1, rotate: 15 }}
+//             whileTap={{ scale: 0.9 }}
+//             className="relative p-3 bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 backdrop-blur-sm border border-white/20 rounded-full hover:from-indigo-500/30 hover:to-cyan-500/30 transition-all duration-200"
+//           >
+//             <HiBell className="h-5 w-5 text-white" />
+//             <motion.div
+//               className="absolute -top-1 -right-1 w-3 h-3 bg-pink-500 rounded-full"
+//               animate={{ scale: [1, 1.2, 1] }}
+//               transition={{ duration: 2, repeat: Infinity }}
+//             />
+//           </motion.button>
+//         </div>
+//       </div>
+//     </motion.nav>
+//   );
+// }
 
 // Hero Component
 function Hero({ setActiveTab }) {
@@ -448,13 +448,13 @@ function Footer() {
 
 
 // Main Landing Component
-export default function Landing({ userEmail = "user@example.com", setActiveTab }) {
+export default function Landing({ userEmail, setActiveTab }) {
   return (
     <div className="bg-slate-900">
-      <NavBar userEmail={userEmail} setActiveTab={setActiveTab} />
+      {/* The NavBar component is no longer rendered here */}
       <main>
-          <Hero setActiveTab={setActiveTab} />
-          <FeaturesSection />
+        <Hero setActiveTab={setActiveTab} />
+        <FeaturesSection />
       </main>
       <Footer />
     </div>
