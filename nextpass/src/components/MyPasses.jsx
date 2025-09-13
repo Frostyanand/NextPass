@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-// import Logo from './Logo';
+import VideoBackground from './VideoBackground'; 
 
 import { 
   HiSparkles, 
@@ -14,7 +14,12 @@ import {
   HiMapPin,
   HiClock
 } from 'react-icons/hi2';
+const passesPageVideos = [
+ "https://www.pexels.com/download/video/4458845",
+ "https://www.pexels.com/download/video/19897083",
+ "https://www.pexels.com/download/video/8101858"
 
+];
 
 // Aurora Blob Component (consistent with landing page)
 function AuroraBlob({ delay = 0, color = "indigo", size = "large" }) {
@@ -415,6 +420,8 @@ export default function MyPasses({ setActiveTab, userEmail }) {
 
   return (
     <div className="min-h-screen bg-slate-900 relative overflow-hidden">
+      <VideoBackground playlist={passesPageVideos} />
+      
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <AuroraBlob delay={0} color="indigo" size="xlarge" />

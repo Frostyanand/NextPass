@@ -1,12 +1,7 @@
-/**
- * NextPass Organise Events Component
- * A stunning event management dashboard with glassmorphism design and smooth animations
- * Dependencies: react, framer-motion, react-icons
- */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Html5Qrcode } from "html5-qrcode";
-// import Logo from './Logo';
+import VideoBackground from './VideoBackground'; 
 
 import { 
   HiPlus, 
@@ -28,6 +23,11 @@ import {
   HiUserGroup
 } from 'react-icons/hi2';
 
+const organisePageVideos = [
+    "https://www.pexels.com/download/video/3064204",
+    "https://www.pexels.com/download/video/6922854",
+    "https://www.pexels.com/download/video/3622213"
+];
 
 // Reusable Aurora Blob Component
 function AuroraBlob({ delay = 0, color = "indigo", size = "large" }) {
@@ -1138,20 +1138,21 @@ export default function OrganiseEvents({ setActiveTab, organiserEmail = "organiz
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 relative overflow-hidden">
-      {/* Floating Logo */}
-      {/* <div className="fixed top-6 left-6 z-50">
-        <div className="relative z-10 container mx-auto px-6 pb-20">
+     <div className="min-h-screen bg-slate-900 relative overflow-hidden">
 
-      </div> */}
+      
+      {/* 3. Place the VideoBackground component here */}
+      <VideoBackground playlist={organisePageVideos} />
 
-      {/* Aurora Background */}
-      <AuroraBlob delay={0} color="indigo" size="xlarge" />
-      <AuroraBlob delay={3} color="cyan" size="large" />
-      <AuroraBlob delay={6} color="pink" size="medium" />
-      <AuroraBlob delay={9} color="violet" size="large" />
+      {/* 4. Wrap Aurora blobs to control their z-index */}
+      <div className="absolute inset-0 z-[5]">
+        <AuroraBlob delay={0} color="indigo" size="xlarge" />
+        <AuroraBlob delay={3} color="cyan" size="large" />
+        <AuroraBlob delay={6} color="pink" size="medium" />
+        <AuroraBlob delay={9} color="violet" size="large" />
+      </div>
 
-      {/* Toast Notifications */}
+      {/* Toast Notifications (z-50 will keep it on top) */}
       <Toast
         message={toast.message}
         type={toast.type}
@@ -1168,18 +1169,19 @@ export default function OrganiseEvents({ setActiveTab, organiserEmail = "organiz
           animate="visible"
           className="text-center mt-12 mb-16"
         >
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 bg-gradient-to-r from-white via-indigo-200 to-cyan-200 bg-clip-text text-transparent leading-tight">
+          {/* Added drop-shadow for better readability on video */}
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 bg-gradient-to-r from-white via-indigo-200 to-cyan-200 bg-clip-text text-transparent leading-tight drop-shadow-lg">
             Organise Your
             <br />
             <span className="bg-gradient-to-r from-cyan-200 via-pink-200 to-white bg-clip-text text-transparent">
               Events
             </span>
           </h1>
-          <p className="text-xl text-white/70 max-w-2xl mx-auto leading-relaxed mb-8">
+          <p className="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed mb-8 drop-shadow-md">
             Create, manage, and track attendance for your events with powerful tools and real-time insights.
           </p>
 
-          {/* Create Event Button */}
+          {/* ... Create Event Button ... */}
           <motion.button
             whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(99, 102, 241, 0.3)" }}
             whileTap={{ scale: 0.95 }}

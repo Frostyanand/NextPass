@@ -1,9 +1,4 @@
-/**
- * NextPass Explore Events Component
- * A stunning events browsing page with glassmorphism design and smooth animations
- * Dependencies: react, framer-motion, react-icons
- */
-// import Logo from './Logo';
+import VideoBackground from './VideoBackground'; 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -18,6 +13,13 @@ import {
   HiArrowRight
 } from 'react-icons/hi2';
 
+// Define a new playlist specific to this page
+const explorePageVideos = [
+  "https://www.pexels.com/download/video/3577616",
+  "https://www.pexels.com/download/video/4916733",
+  "https://www.pexels.com/download/video/9757097",
+  "https://www.pexels.com/download/video/4774631"
+];
 // Reusable Aurora Blob Component (matching Landing page)
 function AuroraBlob({ delay = 0, color = "indigo", size = "large" }) {
   const sizeClasses = {
@@ -385,41 +387,6 @@ export default function ExploreEvents({ setActiveTab }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-//   // Sample data for demo purposes
-//   useEffect(() => {
-//     // Simulate API call
-//     setTimeout(() => {
-//       setEvents([
-//         {
-//           id: '1',
-//           eventName: 'Tech Conference 2024',
-//           organiserEmail: 'organizer@techconf.com',
-//           eventDate: '2024-12-15T10:00:00.000Z',
-//           regDeadline: '2024-12-10T23:59:59.000Z',
-//           remarks: 'Join industry leaders for cutting-edge technology discussions and networking opportunities.'
-//         },
-//         {
-//           id: '2',
-//           eventName: 'Design Workshop',
-//           organiserEmail: 'hello@designstudio.com',
-//           eventDate: '2024-12-20T14:00:00.000Z',
-//           regDeadline: '2024-12-18T23:59:59.000Z',
-//           remarks: 'Learn the latest design trends and tools in this hands-on workshop.'
-//         },
-//         {
-//           id: '3',
-//           eventName: 'Startup Pitch Night',
-//           organiserEmail: 'events@startup.hub',
-//           eventDate: '2024-12-22T18:30:00.000Z',
-//           regDeadline: '2024-12-20T23:59:59.000Z',
-//           remarks: 'Watch amazing startups pitch their ideas to investors and industry experts.'
-//         }
-//       ]);
-//       setLoading(false);
-//     }, 1500);
-//   }, []);
-
-  // Uncomment this for real API integration
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -482,6 +449,7 @@ export default function ExploreEvents({ setActiveTab }) {
         <div className="relative z-10 container mx-auto px-6 pb-20">
 
         </div> */}
+      <VideoBackground playlist={explorePageVideos} />
 
       {/* Aurora Background */}
       <AuroraBlob delay={0} color="indigo" size="xlarge" />
